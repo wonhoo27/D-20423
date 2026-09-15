@@ -78,7 +78,7 @@ top5_qualified_movies = (
 
 top5_df = df[df["영화명"].isin(top5_qualified_movies)]
 
-# 3) 네 번째/다섯 번째 그래프용 데이터 처리: 일자별 TOP10 영화 관객수 합계
+# 3) 일자별 TOP10 영화 관객수 합계
 daily_total = (
     top10_daily.groupby("기준일자")["해당일관객수"]
     .sum()
@@ -87,7 +87,7 @@ daily_total = (
 # 7일 이동평균 계산
 daily_total["7일_이동평균"] = daily_total["해당일관객수"].rolling(window=7, min_periods=1).mean()
 
-# 4) 다섯 번째 그래프용 데이터 처리: 월(연-월) 단위 합계
+# 4) 월(연-월) 단위 합계
 daily_total["연월"] = daily_total["기준일자"].dt.to_period("M").astype(str)
 monthly_total = (
     daily_total.groupby("연월")["해당일관객수"]
@@ -95,15 +95,23 @@ monthly_total = (
     .reset_index()
 )
 
+# 5) 여섯 번째 그래프용 데이터 전처리 (월, 요일, 날짜 텍스트)
+daily_total["월"] = daily_total["기준일자"].dt.strftime("%Y년 %m월")
+# 요일 한글 변환
+weekday_map = {0: "월요일", 1: "화요일", 2: "수요일", 3: "목요일", 4: "금요일", 5: "토요일", 6: "일요일"}
+daily_total["요일"] = daily_total["기준일자"].dt.weekday.map(weekday_map)
+daily_total["날짜_str"] = daily_total["기준일자"].dt.strftime("%Y-%m-%d")
+
 # -------------------------------------------------------------------
 # [4. 구역 분할 및 시각화]
 # -------------------------------------------------------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "일별 관객 수 추이 (선 그래프)", 
     "누적 관객 수 추이 (영역 차트)", 
     "장기 흥행 TOP 5 영화 비교 (다중 선 그래프)",
     "전체 관객 수 트렌드 (이동평균선)",
-    "월별 전체 관객 수 (막대 그래프)"
+    "월별 전체 관객 수 (막대 그래프)",
+    "월별·요일별 관객 분포 (히트맵)"
 ])
 
 # [첫 번째 그래프: 일별 관객수 선그래프]
@@ -159,7 +167,6 @@ with tab4:
     
     fig_ma = go.Figure()
     
-    # 1) 원본 일일 합계 선 (연한 색상, 얇은 선)
     fig_ma.add_trace(go.Scatter(
         x=daily_total["기준일자"],
         y=daily_total["해당일관객수"],
@@ -168,7 +175,6 @@ with tab4:
         line=dict(color="rgba(150, 150, 150, 0.4)", width=1.5)
     ))
     
-    # 2) 7일 이동평균 선 (진한 색상, 두꺼운 선)
     fig_ma.add_trace(go.Scatter(
         x=daily_total["기준일자"],
         y=daily_total["7일_이동평균"],
@@ -197,12 +203,39 @@ with tab5:
         y="해당일관객수",
         title="월별(연-월) 극장가 총 관객 수 합계",
         labels={"연월": "연-월", "해당일관객수": "월 총 관객 수 (명)"},
-        text_auto=".2s"  # 막대 위에 축약된 숫자로 표기 (예: 1.5M)
+        text_auto=".2s"
     )
     
-    # 막대 그래프 레이아웃 커스텀
     fig_bar.update_traces(textposition="outside")
-    fig_bar.update_layout(xaxis_type="category")  # 연-월 라벨이 뭉개지지 않도록 범주형 설정
+    fig_bar.update_layout(xaxis_type="category")
     
     st.plotly_chart(fig_bar, use_container_width=True)
     st.info("💡 **이 그래프로 알 수 있는 것:** 월 단위로 집계된 총 관객 수를 통해 영화 시장의 월별 시즌성(여름/겨울 성수기 vs 봄/가을 비성수기) 및 달별 실적 차이를 한눈에 비교할 수 있습니다.")
+
+# [여섯 번째 그래프: 캘린더 형태 월/요일별 히트맵]
+with tab6:
+    st.subheader("🗓️ 월별·요일별 관객 수 패턴 히트맵")
+    
+    # 요일 순서 강제 정렬 (월요일 -> 일요일)
+    weekday_order = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
+    
+    fig_heatmap = px.density_heatmap(
+        daily_total,
+        x="요일",
+        y="월",
+        z="해당일관객수",
+        histfunc="sum",
+        title="월별 및 요일별 총 관객 수 합계 분포",
+        labels={"요일": "요일", "월": "연월", "해당일관객수": "총 관객 수"},
+        category_orders={"요일": weekday_order},
+        color_continuous_scale="Reds",
+        hover_data={"날짜_str": True, "해당일관객수": ":,명"}
+    )
+    
+    # 마우스 오버(Hover) 스타일 지정
+    fig_heatmap.update_traces(
+        hovertemplate="<b>날짜: %{customdata[0]}</b><br>요일: %{x}<br>월: %{y}<br>관객 수: %{z:,}명<extra></extra>"
+    )
+    
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+    st.info("💡 **이 그래프로 알 수 있는 것:** 특정 월의 주말(토·일) 집중 현상 및 요일별 관객 유입 차이를 색상의 농도로 빠르게 파악할 수 있으며, 마우스를 올려 정확한 날짜별 수치를 확인할 수 있습니다.")

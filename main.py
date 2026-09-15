@@ -78,23 +78,32 @@ top5_qualified_movies = (
 
 top5_df = df[df["영화명"].isin(top5_qualified_movies)]
 
-# 3) 네 번째 그래프용 데이터 처리: 일자별 TOP10 영화 관객수 합계 및 7일 이동평균
+# 3) 네 번째/다섯 번째 그래프용 데이터 처리: 일자별 TOP10 영화 관객수 합계
 daily_total = (
     top10_daily.groupby("기준일자")["해당일관객수"]
     .sum()
     .reset_index()
 )
-# 7일 이동평균 계산 (최소 1개 데이터만 있어도 평균 산출)
+# 7일 이동평균 계산
 daily_total["7일_이동평균"] = daily_total["해당일관객수"].rolling(window=7, min_periods=1).mean()
+
+# 4) 다섯 번째 그래프용 데이터 처리: 월(연-월) 단위 합계
+daily_total["연월"] = daily_total["기준일자"].dt.to_period("M").astype(str)
+monthly_total = (
+    daily_total.groupby("연월")["해당일관객수"]
+    .sum()
+    .reset_index()
+)
 
 # -------------------------------------------------------------------
 # [4. 구역 분할 및 시각화]
 # -------------------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "일별 관객 수 추이 (선 그래프)", 
     "누적 관객 수 추이 (영역 차트)", 
     "장기 흥행 TOP 5 영화 비교 (다중 선 그래프)",
-    "전체 관객 수 트렌드 (이동평균선)"
+    "전체 관객 수 트렌드 (이동평균선)",
+    "월별 전체 관객 수 (막대 그래프)"
 ])
 
 # [첫 번째 그래프: 일별 관객수 선그래프]
@@ -148,7 +157,6 @@ with tab3:
 with tab4:
     st.subheader("📉 전체 박스오피스 일별 총 관객 수 및 7일 이동평균 추이")
     
-    # Plotly Graph Objects(go)를 사용하여 겹쳐 그리기
     fig_ma = go.Figure()
     
     # 1) 원본 일일 합계 선 (연한 색상, 얇은 선)
@@ -169,7 +177,6 @@ with tab4:
         line=dict(color="#FF4B4B", width=3)
     ))
     
-    # 레이아웃 설정
     fig_ma.update_layout(
         title="전체 TOP 10 영화의 일별 관객수 합계 및 7일 이동평균선",
         xaxis_title="날짜",
@@ -179,3 +186,23 @@ with tab4:
     
     st.plotly_chart(fig_ma, use_container_width=True)
     st.info("💡 **이 그래프로 알 수 있는 것:** 평일과 주말의 널뛰는 일일 관객 수 변동을 보정하여, 극장가 전체의 성수기·비성수기 흐름과 중장기적인 시장 관객 수 증감 추세를 명확하게 파악할 수 있습니다.")
+
+# [다섯 번째 그래프: 월별 관객 수 합계 막대그래프]
+with tab5:
+    st.subheader("📅 월별 전체 관객 수 합계 추이")
+    
+    fig_bar = px.bar(
+        monthly_total,
+        x="연월",
+        y="해당일관객수",
+        title="월별(연-월) 극장가 총 관객 수 합계",
+        labels={"연월": "연-월", "해당일관객수": "월 총 관객 수 (명)"},
+        text_auto=".2s"  # 막대 위에 축약된 숫자로 표기 (예: 1.5M)
+    )
+    
+    # 막대 그래프 레이아웃 커스텀
+    fig_bar.update_traces(textposition="outside")
+    fig_bar.update_layout(xaxis_type="category")  # 연-월 라벨이 뭉개지지 않도록 범주형 설정
+    
+    st.plotly_chart(fig_bar, use_container_width=True)
+    st.info("💡 **이 그래프로 알 수 있는 것:** 월 단위로 집계된 총 관객 수를 통해 영화 시장의 월별 시즌성(여름/겨울 성수기 vs 봄/가을 비성수기) 및 달별 실적 차이를 한눈에 비교할 수 있습니다.")

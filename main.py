@@ -29,7 +29,7 @@ st.write("---")
 try:
     df = load_data()
     
-    # 데이터 요약 정보 확인
+    # 원본 데이터 미리보기
     with st.expander("📄 원본 데이터 미리보기"):
         st.dataframe(df, use_container_width=True)
 
@@ -62,9 +62,38 @@ try:
     
     st.plotly_chart(fig_donut, use_container_width=True)
     
-    # 설명 구역 (Container/Info Box)
+    # 1번 설명 구역
     with st.container():
         st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권에 진입한 영화 중 특정 대표 장르(예: 드라마, 액션 등)가 차지하는 비중과 장르별 편수 분포를 한눈에 파악할 수 있습니다.")
+
+    st.write("---")
+
+    # 2. 장르 및 영화별 총 관객 수 (트리맵 그래프)
+    st.subheader("2. 장르 및 영화별 총 관객 수 분포")
+
+    fig_treemap = px.treemap(
+        df,
+        path=['genre', 'movieNm'],
+        values='total_audi',
+        color='genre',
+        title="장르 및 영화별 총 관객 수 (칸 크기 = 총 관객 수)",
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+
+    # 마우스 호버 시 영화명과 총 관객 표기
+    fig_treemap.update_traces(
+        hovertemplate="<b>영화명: %{label}</b><br>총 관객 수: %{value:,.0f}명"
+    )
+
+    fig_treemap.update_layout(
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_treemap, use_container_width=True)
+
+    # 2번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 어떤 장르가 흥행 규모가 큰지, 그리고 각 장르 내에서 어떤 개별 영화가 총 관객 수의 대부분을 견인했는지 흥행 비중과 기여도를 한눈에 비교할 수 있습니다.")
 
     st.write("---")
 

@@ -97,5 +97,44 @@ try:
 
     st.write("---")
 
+    # 3. 총 관객 수 히스토그램
+    st.subheader("3. 총 관객 수(total_audi) 분포")
+
+    fig_hist = px.histogram(
+        df,
+        x='total_audi',
+        nbins=30,
+        title="총 관객 수 분포 히스토그램",
+        color_discrete_sequence=['#42A5F5']
+    )
+
+    fig_hist.update_traces(
+        marker_line_color='white',
+        marker_line_width=1,
+        hovertemplate="<b>관객 수 구간: %{x:,.0f}명</b><br>영화 수: %{y}편"
+    )
+
+    fig_hist.update_layout(
+        xaxis_title="총 관객 수 (명)",
+        yaxis_title="영화 편수 (개)",
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_hist, use_container_width=True)
+
+    # 3번 통계 데이터 계산
+    max_row = df.loc[df['total_audi'].idxmax()]
+    max_movie_name = max_row['movieNm']
+    max_movie_audi = max_row['total_audi']
+
+    # 3번 설명 구역
+    with st.container():
+        st.info(
+            f"💡 **이 그래프로 알 수 있는 것:** 대부분의 영화는 **총 관객 수 100만 명 미만(주로 50만 명 안팎)**의 낮은 구간에 집중되어 있어 양극화 현상이 뚜렷하며, "
+            f"가장 관객이 많은 영화는 **'{max_movie_name}'**(총 {max_movie_audi:,.0f}명)임을 알 수 있습니다."
+        )
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")

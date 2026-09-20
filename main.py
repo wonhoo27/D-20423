@@ -208,5 +208,40 @@ try:
 
     st.write("---")
 
+    # 6. 개봉일 스크린 수 vs 총 관객 수 (버블 크기: 개봉 첫 주 관객)
+    st.subheader("6. 개봉일 스크린 수, 총 관객 수 및 첫 주 관객 수 관계 (버블 차트)")
+
+    fig_bubble = px.scatter(
+        df,
+        x='first_scrn',
+        y='total_audi',
+        size='first_week_audi',
+        color='genre',
+        hover_name='movieNm',
+        title="개봉일 스크린 수 vs 총 관객 수 (버블 크기 = 개봉 첫 주 관객 수)",
+        size_max=40,
+        color_discrete_sequence=px.colors.qualitative.Set1
+    )
+
+    fig_bubble.update_traces(
+        marker=dict(opacity=0.7, line=dict(width=1, color='white')),
+        hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{fullData.name}<br>개봉일 스크린 수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명<br>첫 주 관객 수: %{marker.size:,.0f}명"
+    )
+
+    fig_bubble.update_layout(
+        xaxis_title="개봉일 스크린 수 (개)",
+        yaxis_title="총 관객 수 (명)",
+        legend_title="장르",
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_bubble, use_container_width=True)
+
+    # 6번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린 수와 총 관객 수의 관계뿐만 아니라, 점의 크기(개봉 첫 주 관객 수)를 통해 초반 흥행 기세가 최종 관객 수에 얼마나 큰 영향을 미치는지 종합적으로 관찰할 수 있습니다.")
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")

@@ -169,5 +169,44 @@ try:
 
     st.write("---")
 
+    # 5. 영화 10편 이상 장르의 총 관객 수 박스플롯
+    st.subheader("5. 주요 장르별 총 관객 수 박스플롯 (영화 10편 이상)")
+
+    # 영화 10편 이상인 장르 필터링
+    genre_counts_series = df['genre'].value_counts()
+    major_genres = genre_counts_series[genre_counts_series >= 10].index.tolist()
+    df_major = df[df['genre'].isin(major_genres)]
+
+    fig_box = px.box(
+        df_major,
+        x='genre',
+        y='total_audi',
+        color='genre',
+        points='outliers',
+        hover_name='movieNm',
+        title="10편 이상 개봉 장르별 총 관객 수 분포 및 이상치(대흥행작)",
+        color_discrete_sequence=px.colors.qualitative.Pastel
+    )
+
+    # 이상치 및 데이터 포인트 마우스 호버 표기
+    fig_box.update_traces(
+        hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{x}<br>총 관객 수: %{y:,.0f}명"
+    )
+
+    fig_box.update_layout(
+        xaxis_title="장르",
+        yaxis_title="총 관객 수 (명)",
+        showlegend=False,
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_box, use_container_width=True)
+
+    # 5번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 영화 편수가 10편 이상인 주요 장르 간 흥행 실적의 중앙값과 범위를 비교할 수 있으며, 박스 위쪽의 상자 밖 점(이상치)을 통해 장르 전체 평균을 크게 상회하는 초대형 흥행작을 식별할 수 있습니다.")
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")

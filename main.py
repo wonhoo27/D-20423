@@ -243,5 +243,36 @@ try:
 
     st.write("---")
 
+    # 7. 제작 국가 -> 장르 선버스트 차트
+    st.subheader("7. 제작 국가 및 장르별 영화 편수 (선버스트 차트)")
+
+    # 국가 및 장르별 카운트 계산
+    df_sunburst = df.groupby(['nation', 'genre']).size().reset_index(name='movie_count')
+
+    fig_sunburst = px.sunburst(
+        df_sunburst,
+        path=['nation', 'genre'],
+        values='movie_count',
+        color='nation',
+        title="제작 국가 → 장르 계층 구조 (칸 크기 = 영화 편수)",
+        color_discrete_sequence=px.colors.qualitative.Pastel
+    )
+
+    fig_sunburst.update_traces(
+        hovertemplate="<b>구분: %{label}</b><br>영화 편수: %{value}편<br>비율: %{percentParent:.1%}"
+    )
+
+    fig_sunburst.update_layout(
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_sunburst, use_container_width=True)
+
+    # 7번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권 영화들의 국가별 제작 비중과 함께, 각 국가에서 어떤 장르의 영화가 주로 개봉하고 유통되었는지 다층적인 구조로 쉽게 파악할 수 있습니다.")
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")

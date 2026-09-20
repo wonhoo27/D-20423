@@ -136,5 +136,38 @@ try:
 
     st.write("---")
 
+    # 4. 개봉일 스크린 수 vs 총 관객 수 (산점도 그래프)
+    st.subheader("4. 개봉일 스크린 수와 총 관객 수의 관계")
+
+    fig_scatter = px.scatter(
+        df,
+        x='first_scrn',
+        y='total_audi',
+        color='genre',
+        hover_name='movieNm',
+        title="개봉일 스크린 수(first_scrn) vs 총 관객 수(total_audi)",
+        color_discrete_sequence=px.colors.qualitative.Set1
+    )
+
+    fig_scatter.update_traces(
+        marker=dict(size=9, opacity=0.8),
+        hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{fullData.name}<br>개봉일 스크린 수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명"
+    )
+
+    fig_scatter.update_layout(
+        xaxis_title="개봉일 스크린 수 (개)",
+        yaxis_title="총 관객 수 (명)",
+        legend_title="장르",
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_scatter, use_container_width=True)
+
+    # 4번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린 수가 많을수록 총 관객 수도 증가하는 양의 상관관계를 확인할 수 있으며, 동일한 스크린 수 대비 장르나 작품에 따른 흥행성 차이도 함께 파악할 수 있습니다.")
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")

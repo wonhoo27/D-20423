@@ -274,5 +274,38 @@ try:
 
     st.write("---")
 
+    # 8. 개봉 첫 주 관객 vs 개봉일 상영횟수 (질문 기반 산점도)
+    st.subheader("8. 개봉 첫 주 관객 수와 개봉일 상영횟수 관계")
+
+    fig_scatter_show = px.scatter(
+        df,
+        x='first_week_audi',
+        y='first_show',
+        color='genre',
+        hover_name='movieNm',
+        title="개봉 첫 주 관객 수가 많다면 개봉일 상영횟수도 많을까?",
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+
+    fig_scatter_show.update_traces(
+        marker=dict(size=9, opacity=0.8),
+        hovertemplate="<b>영화명: %{hovertext}</b><br>장르: %{fullData.name}<br>개봉 첫 주 관객 수: %{x:,.0f}명<br>개봉일 상영횟수: %{y:,.0f}회"
+    )
+
+    fig_scatter_show.update_layout(
+        xaxis_title="개봉 첫 주 관객 수 (명)",
+        yaxis_title="개봉일 상영횟수 (회)",
+        legend_title="장르",
+        margin=dict(t=50, b=20, l=20, r=20)
+    )
+
+    st.plotly_chart(fig_scatter_show, use_container_width=True)
+
+    # 8번 설명 구역
+    with st.container():
+        st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 상영횟수가 많은 영화일수록 개봉 첫 주 관객 수도 높게 나타나는 명확한 비례 관계를 보여주어, 초반 스크린 및 상영 회차 확보가 개봉 초기 흥행의 핵심 요인임을 파악할 수 있습니다.")
+
+    st.write("---")
+
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
